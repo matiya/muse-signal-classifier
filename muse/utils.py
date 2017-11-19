@@ -12,13 +12,15 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-
 sns.set_context('talk')
 sns.set_style('white')
 
 
-def load_muse_csv_as_raw(filename, sfreq=256., ch_ind=[0, 1, 2, 3],
-                         stim_ind=5, replace_ch_names=None):
+def load_muse_csv_as_raw(filename,
+                         sfreq=256.,
+                         ch_ind=[0, 1, 2, 3],
+                         stim_ind=5,
+                         replace_ch_names=None):
     """Load CSV files into a Raw object.
 
     Args:
@@ -49,8 +51,10 @@ def load_muse_csv_as_raw(filename, sfreq=256., ch_ind=[0, 1, 2, 3],
         ch_names = list(data.columns)[0:n_channel] + ['Stim']
 
         if replace_ch_names is not None:
-            ch_names = [c if c not in replace_ch_names.keys()
-                        else replace_ch_names[c] for c in ch_names]
+            ch_names = [
+                c if c not in replace_ch_names.keys() else replace_ch_names[c]
+                for c in ch_names
+            ]
 
         # type of each channels
         ch_types = ['eeg'] * n_channel + ['stim']
@@ -63,8 +67,8 @@ def load_muse_csv_as_raw(filename, sfreq=256., ch_ind=[0, 1, 2, 3],
         data[:-1] *= 1e-6
 
         # create MNE object
-        info = create_info(ch_names=ch_names, ch_types=ch_types,
-                           sfreq=sfreq, montage=montage)
+        info = create_info(
+            ch_names=ch_names, ch_types=ch_types, sfreq=sfreq, montage=montage)
         raw.append(RawArray(data=data, info=info))
 
     # concatenate all raw objects
@@ -73,8 +77,13 @@ def load_muse_csv_as_raw(filename, sfreq=256., ch_ind=[0, 1, 2, 3],
     return raws
 
 
-def load_data(data_dir, subject_nb=1, session_nb=1, sfreq=256.,
-              ch_ind=[0, 1, 2, 3], stim_ind=5, replace_ch_names=None):
+def load_data(data_dir,
+              subject_nb=1,
+              session_nb=1,
+              sfreq=256.,
+              ch_ind=[0, 1, 2, 3],
+              stim_ind=5,
+              replace_ch_names=None):
     """Load CSV files from the /data directory into a Raw object.
 
     Args:
@@ -100,18 +109,26 @@ def load_data(data_dir, subject_nb=1, session_nb=1, sfreq=256.,
     if session_nb == 'all':
         session_nb = '*'
 
-    data_path = os.path.join(
-            '../data', data_dir,
-            'subject{}/session{}/data_*.csv'.format(subject_nb, session_nb))
+    data_path = os.path.join('../data', data_dir,
+                             'subject{}/session{}/data_*.csv'.format(
+                                 subject_nb, session_nb))
     fnames = glob(data_path)
 
-    return load_muse_csv_as_raw(fnames, sfreq=sfreq, ch_ind=ch_ind,
-                                stim_ind=stim_ind,
-                                replace_ch_names=replace_ch_names)
+    return load_muse_csv_as_raw(
+        fnames,
+        sfreq=sfreq,
+        ch_ind=ch_ind,
+        stim_ind=stim_ind,
+        replace_ch_names=replace_ch_names)
 
 
-def plot_conditions(epochs, conditions=OrderedDict(), ci=97.5, n_boot=1000,
-                    title='', palette=None, ylim=(-6, 6),
+def plot_conditions(epochs,
+                    conditions=OrderedDict(),
+                    ci=97.5,
+                    n_boot=1000,
+                    title='',
+                    palette=None,
+                    ylim=(-6, 6),
                     diff_waveform=(1, 2)):
     """Plot ERP conditions.
 
@@ -149,14 +166,18 @@ def plot_conditions(epochs, conditions=OrderedDict(), ci=97.5, n_boot=1000,
     times = epochs.times
     y = pd.Series(epochs.events[:, -1])
 
-    fig, axes = plt.subplots(2, 2, figsize=[12, 6],
-                             sharex=True, sharey=True)
+    fig, axes = plt.subplots(2, 2, figsize=[12, 6], sharex=True, sharey=True)
     axes = [axes[1, 0], axes[0, 0], axes[0, 1], axes[1, 1]]
 
     for ch in range(4):
         for cond, color in zip(conditions.values(), palette):
-            sns.tsplot(X[y.isin(cond), ch], time=times, color=color,
-                       n_boot=n_boot, ci=ci, ax=axes[ch])
+            sns.tsplot(
+                X[y.isin(cond), ch],
+                time=times,
+                color=color,
+                n_boot=n_boot,
+                ci=ci,
+                ax=axes[ch])
 
         if diff_waveform:
             diff = (np.nanmean(X[y == diff_waveform[1], ch], axis=0) -
@@ -165,8 +186,13 @@ def plot_conditions(epochs, conditions=OrderedDict(), ci=97.5, n_boot=1000,
 
         axes[ch].set_title(epochs.ch_names[ch])
         axes[ch].set_ylim(ylim)
-        axes[ch].axvline(x=0, ymin=ylim[0], ymax=ylim[1], color='k',
-                         lw=1, label='_nolegend_')
+        axes[ch].axvline(
+            x=0,
+            ymin=ylim[0],
+            ymax=ylim[1],
+            color='k',
+            lw=1,
+            label='_nolegend_')
 
     axes[0].set_xlabel('Time (s)')
     axes[0].set_ylabel('Amplitude (uV)')
@@ -186,3 +212,8 @@ def plot_conditions(epochs, conditions=OrderedDict(), ci=97.5, n_boot=1000,
         fig.suptitle(title, fontsize=20)
 
     return fig, axes
+
+
+def plot_per_event(epochs):
+    for event in epochs.event_id:
+        epochs[event].average().plot_joint(title="EEG %s" % event)

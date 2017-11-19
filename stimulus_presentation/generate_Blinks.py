@@ -32,7 +32,8 @@ parser.add_option(
 # Create markers stream outlet
 info = StreamInfo('Markers', 'Markers', 1, 0, 'int32', 'myuidw43536')
 outlet = StreamOutlet(info)
-
+# 1 : No Parpadeo
+# 2 :  Parpadeo
 markernames = [1, 2]
 start = time()
 
@@ -74,8 +75,7 @@ while mov.status != visual.FINISHED:
             outlet.push_sample([markernames[0]], timestamp)
     if len(event.getKeys()) > 0 or (time() - start) > record_duration:
         break
-
-event.clearEvents()
+    event.clearEvents()
 
 mywin.close()
-core.quit()
+#core.quit()

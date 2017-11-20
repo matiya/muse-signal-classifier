@@ -214,6 +214,6 @@ def plot_conditions(epochs,
     return fig, axes
 
 
-def plot_per_event(epochs):
+def plot_per_event(epochs, title=""):
     for event in epochs.event_id:
-        epochs[event].average().plot_joint(title="EEG %s" % event)
+        epochs[event].average().plot_joint(title=title + " - %s" % event)

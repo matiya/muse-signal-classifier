@@ -52,7 +52,7 @@ aud1 = sound.Sound('C', octave=5, sampleRate=44100, secs=0.3, bits=8)
 aud1.setVolume(0.8)
 path_to_stimulus = '/home/default/Workspace/pfinal//stimulus_presentation/stim/timer.webm'
 mov = visual.MovieStim3(
-    mywin, path_to_stimulus, size=(800, 600), volume=1.0, noAudio=True)
+    mywin, path_to_stimulus, size=(800, 600), volume=1.0, noAudio=False)
 start = time()
 timestamp = time()
 

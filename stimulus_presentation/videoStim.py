@@ -2,6 +2,9 @@ from time import time, strftime, gmtime
 from optparse import OptionParser
 from glob import glob
 from random import choice
+from subprocess import Popen, PIPE
+import os
+import signal
 
 import numpy as np
 from pandas import DataFrame
@@ -39,7 +42,9 @@ outlet = StreamOutlet(info)
 # 2 : Estimulo negativo
 # 3 : Estimulo neutro
 markernames = [1, 2, 3]
-
+# Hay un bug con la siguiente importacion
+# hay que hacerla despues de crear los
+# streams lsl
 from psychopy import gui
 # Feedback del usuario
 feedback = []
@@ -52,18 +57,21 @@ timestamp = time()
 
 # Set up trial parameters
 n_trials = np.float32(options.n_trials)
-iti = np.float32(options.iti)
+iti = np.int32(options.iti)
 soa = 0.2
 jitter = 0.2
 record_duration = 1000
 # Setup trial list
 # cambiar para mostrar videos feos
-movie_type = np.random.binomial(1, 0.5, n_trials)
+movie_type = np.random.binomial(1, 0.7, n_trials)
 
 trials = DataFrame(dict(movie_type=movie_type, timestamp=np.zeros(n_trials)))
 
 mywin = visual.Window(
     [1366, 800], monitor='testMonitor', units='deg', fullscr=False)
+
+# lista de videos
+videos = []
 
 
 def load_movie(filename):
@@ -112,6 +120,10 @@ myDlg.addField('Edad:')
 myDlg.addField('Sexo:', choices=["Masculino", "Femenino"])
 handle_eval_data(myDlg)
 
+# iniciar captura de datos
+cmd = "python -u ../lsl-record.py -d 1200"
+proc = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE, preexec_fn=os.setsid)
+
 for ii, trial in trials.iterrows():
     # intervalo entre videos
     message = visual.TextStim(
@@ -122,9 +134,14 @@ for ii, trial in trials.iterrows():
     mywin.flip()
     core.wait(iti + np.random.rand() * jitter)
 
-    # Select and display image
-    label = trials['movie_type'].iloc[ii]
-    mov = choice(make_choice(label))
+    # No mostrar videos repetidos
+    while True:
+        label = trials['movie_type'].iloc[ii]
+        mov = choice(make_choice(label))
+        if mov not in videos:
+            break
+    videos.append(mov)
+
     # tiempo en el que aparece el estimulo
     onset = int(mov.filename.split('.')[0].split('_')[1])
     logging.log("Archivo: %s" % mov.filename, level=80)
@@ -182,4 +199,6 @@ for ii, trial in trials.iterrows():
         break
 
 # Cleanup
+core.wait(2.0)
+os.killpg(os.getpgid(proc.pid), signal.SIGINT)
 mywin.close()
